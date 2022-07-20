@@ -62,16 +62,16 @@ public class Player : MonoBehaviour {
 
     void Start() {
 
+        // Referencia os componentes
         rb =        GetComponent<Rigidbody2D>();
         animator =  GetComponent<Animator>();
         tr =        GetComponent<TrailRenderer>();
 
-        // Define a saúde máxima
+        // Define a vida máxima
         currentHealth = maxHealth;
 		healthBar.SetMaxHealth(maxHealth);
         
         blockInput = false;
-
     }
 
     void Update() {
@@ -95,7 +95,6 @@ public class Player : MonoBehaviour {
                 jumping = true;
                 doubleJump = false;
             } 
-       
         }
 
         // Input do ataque do personagem 
@@ -116,7 +115,6 @@ public class Player : MonoBehaviour {
 
             // Redefine o temporizador
             timeSinceAttack = 0.0f;
-
         } 
 
         // Input de bloqueo
@@ -179,14 +177,13 @@ public class Player : MonoBehaviour {
             }
         }
 
-        // Animação de morte do personagem
+        // Morte do personagem
         if (currentHealth <= 0 && !blockInput) {
             animator.SetTrigger("Deading");
             blockInput = true;
             moveSpeed = 0;
             inputX = 0;
         }
-
     }
 
     void FixedUpdate() {
@@ -206,8 +203,7 @@ public class Player : MonoBehaviour {
         }
 
         // Aumenta o cronômetro que controla o combo de ataque
-        timeSinceAttack += Time.deltaTime;
-        
+        timeSinceAttack += Time.deltaTime; 
     }
     
     // Dash do personagem 
