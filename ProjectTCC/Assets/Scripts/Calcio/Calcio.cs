@@ -17,7 +17,7 @@ public class Calcio : MonoBehaviour {
     private float                          intTimer;
     private bool                           cooling; // Check if Enemy is cooling after attack
 
-    // Vida do inimigo
+    // Vida
     [Header("Health")]
     [SerializeField] int          damagePlayer;
     public int                    maxHealth = 100;

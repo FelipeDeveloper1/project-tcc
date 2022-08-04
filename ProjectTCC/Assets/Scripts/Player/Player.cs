@@ -4,63 +4,68 @@ using UnityEngine;
 
 public class Player : MonoBehaviour {
 
+    // Script do personagem 
+    public static Player                pr;
+
     // Movimentação
     [Header("Move")]
-    [SerializeField] float        moveSpeed = 4.0f;
-    public static bool            blockInput; 
-    private float                 inputX;              
-    private int                   facingDirection;
+    [SerializeField] float              moveSpeed = 4.0f;
+    public bool                         blockInput; 
+    private float                       inputX;              
+    private int                         facingDirection;
 
     // Pulo
     [Header("Jump")]
-    [SerializeField] float        jumpForce = 7.5f;
-    [SerializeField] bool         jumping;
-    private bool                  doubleJump;
+    [SerializeField] float              jumpForce = 7.5f;
+    [SerializeField] bool               jumping;
+    private bool                        doubleJump;
 
     // Ataque
     [Header("Atack")]
-    [SerializeField] bool         attacking;
-    [SerializeField] float        timeAttack = 0.4f;
-    private int                   currentAttack = 0;
-    private float                 timeSinceAttack = 0.0f;
+    [SerializeField] bool               attacking;
+    [SerializeField] float              timeAttack = 0.4f;
+    private int                         currentAttack = 0;
+    private float                       timeSinceAttack = 0.0f;
 
     // Bloqueo
     [Header("Block")]
-    [SerializeField] bool         blocking;
+    public bool               blocking;
 
     // Dash
     [Header("Dash")]
-    [SerializeField] bool         dashing; 
-	[SerializeField] float        dashingPower;  
-	[SerializeField] float        dashingTime; 
-	[SerializeField] float        dashingCooldown; 
-	private bool                  canDash = true; 
+    [SerializeField] bool               dashing; 
+	[SerializeField] float              dashingPower;  
+	[SerializeField] float              dashingTime; 
+	[SerializeField] float              dashingCooldown; 
+	private bool                        canDash = true; 
 
     // Paraquedas
     [Header("Parachute")]
-    public Parachute              parachute;
+    public Parachute                    parachute;
 
     // Reconhecer o chão
     [Header("Ground")]
-    [SerializeField] bool         grounded;
-    [SerializeField] LayerMask    groundLayer;
-    public Transform              groundPosition;
-    public float                  sizeRadius;
+    [SerializeField] bool               grounded;
+    [SerializeField] LayerMask          groundLayer;
+    public Transform                    groundPosition;
+    public float                        sizeRadius;
 
-    // Vida do personagem
+    // Vida do personagem 
+    
     [Header("Health")]
-    [SerializeField] int          damageEnemy;
-    public int                    maxHealth = 100;
-	public int                    currentHealth;
-	public HealthBar              healthBar;
-    private bool                  colliding;
+    public int                          maxHealth = 100;
+	public int                          currentHealth;
+    
 
     // Componentes 
-    private Rigidbody2D           rb;
-    private Animator              animator;
-    private TrailRenderer         tr;
+    [HideInInspector] public Animator   animator;
+    private Rigidbody2D                 rb;
+    private TrailRenderer               tr;
 
     void Start() {
+
+        // Referencia o script
+        pr = this;
 
         // Referencia os componentes
         rb =        GetComponent<Rigidbody2D>();
@@ -69,15 +74,12 @@ public class Player : MonoBehaviour {
 
         // Define a vida máxima
         currentHealth = maxHealth;
-		healthBar.SetMaxHealth(maxHealth);
+		PlayerInteraction.prIn.healthBar.SetMaxHealth(maxHealth);
         
         blockInput = false;
     }
 
     void Update() {
-
-        // Detecta se está colidindo
-        colliding = false; 
 
         // Reconhece o chão
         grounded = Physics2D.OverlapCircle(groundPosition.position, sizeRadius, groundLayer);
@@ -221,25 +223,6 @@ public class Player : MonoBehaviour {
 		yield return new WaitForSeconds(dashingCooldown); 
 		canDash = true; 
     }
-
-    // Dano do personagem
-    void OnTriggerEnter2D(Collider2D other) {
-        if(colliding)
-            return;
-        colliding = true;
-
-        if (other.gameObject.tag == "Damage" && currentHealth > 0) {
-            TakeDamage(damageEnemy);
-            if (currentHealth > 0)
-            animator.SetTrigger("Hunting");
-        }
-    }
-
-    // Diminui a barra de vida
-    void TakeDamage(int damage) {
-		currentHealth -= damage;
-		healthBar.SetHealth(currentHealth);
-	}
 
     // Finalização do ataque
     void EndAnimationATK() {
