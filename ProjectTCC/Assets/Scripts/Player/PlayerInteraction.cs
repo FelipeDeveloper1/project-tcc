@@ -5,16 +5,14 @@ using UnityEngine;
 public class PlayerInteraction : MonoBehaviour {
 
     // Script de interação
-    public static PlayerInteraction prIn;
+    public static PlayerInteraction      prIn;
 
     // Vida do personagem
-    [Header("Health")]
-    [SerializeField] int          damageEnemy;
-	public HealthBar              healthBar;
-    private bool                  colliding;
-    public bool                   hurting;
+	[HideInInspector] public HealthBar   healthBar;
+    private bool                         colliding;
 
     void Start() {
+        // Referencia o script
         prIn = this;
     }
 
@@ -30,9 +28,9 @@ public class PlayerInteraction : MonoBehaviour {
         colliding = true;
 
         if (other.gameObject.tag == "Damage" && Player.pr.currentHealth > 0 && !Player.pr.blocking ) {
-            TakeDamage(damageEnemy);
+            TakeDamage(Calcio.cal.damageTaken);
             if (Player.pr.currentHealth > 0)
-                Player.pr.animator.SetTrigger("Hunting");
+                Player.pr.anim.SetTrigger("Hunting");
         }
     }
 

@@ -29,7 +29,7 @@ public class Player : MonoBehaviour {
 
     // Bloqueo
     [Header("Block")]
-    public bool               blocking;
+    public bool                         blocking;
 
     // Dash
     [Header("Dash")]
@@ -50,15 +50,13 @@ public class Player : MonoBehaviour {
     public Transform                    groundPosition;
     public float                        sizeRadius;
 
-    // Vida do personagem 
-    
+    // Vida
     [Header("Health")]
     public int                          maxHealth = 100;
 	public int                          currentHealth;
     
-
     // Componentes 
-    [HideInInspector] public Animator   animator;
+    [HideInInspector] public Animator   anim;
     private Rigidbody2D                 rb;
     private TrailRenderer               tr;
 
@@ -69,12 +67,12 @@ public class Player : MonoBehaviour {
 
         // Referencia os componentes
         rb =        GetComponent<Rigidbody2D>();
-        animator =  GetComponent<Animator>();
+        anim =      GetComponent<Animator>();
         tr =        GetComponent<TrailRenderer>();
 
         // Define a vida máxima
         currentHealth = maxHealth;
-		PlayerInteraction.prIn.healthBar.SetMaxHealth(maxHealth);
+        HealthBar.hlbr.SetMaxHealth(maxHealth);
         
         blockInput = false;
     }
@@ -113,7 +111,7 @@ public class Player : MonoBehaviour {
                 currentAttack = 1;
 
             // Chama uma das três animações de ataque "Attacking1", "Attacking2", "Attacking3"
-            animator.SetTrigger("Attacking" + currentAttack);
+            anim.SetTrigger("Attacking" + currentAttack);
 
             // Redefine o temporizador
             timeSinceAttack = 0.0f;
@@ -122,11 +120,11 @@ public class Player : MonoBehaviour {
         // Input de bloqueo
         if (Input.GetButtonDown("Fire2") && grounded && !attacking && !blockInput) {
             blocking = true;
-            animator.SetTrigger("Blocking");
-            animator.SetBool("IdleBlocking", true);
+            anim.SetTrigger("Blocking");
+            anim.SetBool("IdleBlocking", true);
         } else if (Input.GetButtonUp("Fire2")) {
             blocking = false;
-            animator.SetBool("IdleBlocking", false);
+            anim.SetBool("IdleBlocking", false);
         }
 
         // Trava o movimento do personagem
@@ -159,29 +157,29 @@ public class Player : MonoBehaviour {
 
         // Animação de movimentação do personagem 
         if (grounded) {
-            animator.SetBool("Falling", false);
-            animator.SetBool("Jumping", false);
+            anim.SetBool("Falling", false);
+            anim.SetBool("Jumping", false);
 
             if (rb.velocity.x != 0 && inputX != 0) {
-                animator.SetBool("Running", true);
+                anim.SetBool("Running", true);
             } else {
-                animator.SetBool("Running", false);
+                anim.SetBool("Running", false);
             }
         } else {
-            animator.SetBool("Running", false);
+            anim.SetBool("Running", false);
 
             if (rb.velocity.y > 0) {
-                animator.SetBool("Jumping", true);
-                animator.SetBool("Falling", false);
+                anim.SetBool("Jumping", true);
+                anim.SetBool("Falling", false);
             } if (rb.velocity.y < 0) {
-                animator.SetBool("Falling", true);
-                animator.SetBool("Jumping", false);
+                anim.SetBool("Falling", true);
+                anim.SetBool("Jumping", false);
             }
         }
 
         // Morte do personagem
         if (currentHealth <= 0 && !blockInput) {
-            animator.SetTrigger("Deading");
+            anim.SetTrigger("Deading");
             blockInput = true;
             moveSpeed = 0;
             inputX = 0;

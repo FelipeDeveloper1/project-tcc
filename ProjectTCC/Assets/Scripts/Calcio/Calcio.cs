@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Calcio : MonoBehaviour {
 
+    public static Calcio                   cal;
+
     // Movimentação
     [Header("Move")]
     public float                           moveSpeed;
@@ -19,10 +21,11 @@ public class Calcio : MonoBehaviour {
 
     // Vida
     [Header("Health")]
-    [SerializeField] int          damagePlayer;
-    public int                    maxHealth = 100;
-	public int                    currentHealth;
-    private bool                  colliding;
+    [SerializeField] int                   damageGiven;
+    public int                             damageTaken;
+    public int                             maxHealth = 100;
+	public int                             currentHealth;
+    private bool                           colliding;
 
     // Área limite
     [Header("Limit")]
@@ -41,6 +44,8 @@ public class Calcio : MonoBehaviour {
     private Animator anim;
 
     void Awake() {
+
+        cal = this;
         
         anim = GetComponent<Animator>();
 
@@ -191,7 +196,7 @@ public class Calcio : MonoBehaviour {
         colliding = true;
 
         if (other.gameObject.tag == "AttackPlayer" && currentHealth > 0) {
-            currentHealth -= damagePlayer;
+            currentHealth -= damageGiven;
             if (currentHealth > 0)
             anim.SetTrigger("Hit");
         }
