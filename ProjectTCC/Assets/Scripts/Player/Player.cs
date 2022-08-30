@@ -4,80 +4,82 @@ using UnityEngine;
 
 public class Player : MonoBehaviour {
 
-    // Script do personagem 
-    public static Player                pr;
-
     // Movimentação
     [Header("Move")]
-    [SerializeField] float              moveSpeed = 4.0f;
-    public bool                         blockInput; 
-    private float                       inputX;              
-    private int                         facingDirection;
+    [SerializeField] float        moveSpeed = 4.0f;
+    public static bool            blockInput; 
+    private float                 inputX;              
+    private int                   facingDirection;
+    private float                 slowspeed = 1.0f;
 
     // Pulo
     [Header("Jump")]
-    [SerializeField] float              jumpForce = 7.5f;
-    [SerializeField] bool               jumping;
-    private bool                        doubleJump;
+    [SerializeField] float        jumpForce = 7.5f;
+    [SerializeField] bool         jumping;
+    private bool                  doubleJump;
 
     // Ataque
     [Header("Atack")]
-    [SerializeField] bool               attacking;
-    [SerializeField] float              timeAttack = 0.4f;
-    private int                         currentAttack = 0;
-    private float                       timeSinceAttack = 0.0f;
+    [SerializeField] bool         attacking;
+    [SerializeField] float        timeAttack = 0.4f;
+    private int                   currentAttack = 0;
+    private float                 timeSinceAttack = 0.0f;
 
     // Bloqueo
     [Header("Block")]
-    public bool                         blocking;
+    [SerializeField] bool         blocking;
 
     // Dash
     [Header("Dash")]
-    [SerializeField] bool               dashing; 
-	[SerializeField] float              dashingPower;  
-	[SerializeField] float              dashingTime; 
-	[SerializeField] float              dashingCooldown; 
-	private bool                        canDash = true; 
+    public float                dashVel;
+    public float                dashTime;
+    private Vector2             dashDir;
+    private bool                isDashing;
+    private bool                canDash;
+    public Ghost                ghost;
 
     // Paraquedas
     [Header("Parachute")]
-    public Parachute                    parachute;
+    public Parachute              parachute;
 
     // Reconhecer o chão
     [Header("Ground")]
-    [SerializeField] bool               grounded;
-    [SerializeField] LayerMask          groundLayer;
-    public Transform                    groundPosition;
-    public float                        sizeRadius;
+    [SerializeField] bool         grounded;
+    [SerializeField] LayerMask    groundLayer;
+    public Transform              groundPosition;
+    public float                  sizeRadius;
 
-    // Vida
+    // Vida do personagem
     [Header("Health")]
-    public int                          maxHealth = 100;
-	public int                          currentHealth;
-    
+    [SerializeField] int          damageEnemy;
+    public int                    maxHealth = 100;
+	public int                    currentHealth;
+	public HealthBar              healthBar;
+    private bool                  colliding;
+
     // Componentes 
-    [HideInInspector] public Animator   anim;
-    private Rigidbody2D                 rb;
-    private TrailRenderer               tr;
+    private Rigidbody2D           rb;
+    private Animator              animator;
+    private TrailRenderer         tr;
 
     void Start() {
 
-        // Referencia o script
-        pr = this;
-
         // Referencia os componentes
         rb =        GetComponent<Rigidbody2D>();
-        anim =      GetComponent<Animator>();
+        animator =  GetComponent<Animator>();
         tr =        GetComponent<TrailRenderer>();
 
         // Define a vida máxima
         currentHealth = maxHealth;
-        HealthBar.hlbr.SetMaxHealth(maxHealth);
+		healthBar.SetMaxHealth(maxHealth);
         
         blockInput = false;
     }
 
     void Update() {
+        Dash();
+        // Detecta se está colidindo
+        colliding = false; 
 
         // Reconhece o chão
         grounded = Physics2D.OverlapCircle(groundPosition.position, sizeRadius, groundLayer);
@@ -111,7 +113,7 @@ public class Player : MonoBehaviour {
                 currentAttack = 1;
 
             // Chama uma das três animações de ataque "Attacking1", "Attacking2", "Attacking3"
-            anim.SetTrigger("Attacking" + currentAttack);
+            animator.SetTrigger("Attacking" + currentAttack);
 
             // Redefine o temporizador
             timeSinceAttack = 0.0f;
@@ -120,20 +122,27 @@ public class Player : MonoBehaviour {
         // Input de bloqueo
         if (Input.GetButtonDown("Fire2") && grounded && !attacking && !blockInput) {
             blocking = true;
-            anim.SetTrigger("Blocking");
-            anim.SetBool("IdleBlocking", true);
+            animator.SetTrigger("Blocking");
+            animator.SetBool("IdleBlocking", true);
         } else if (Input.GetButtonUp("Fire2")) {
             blocking = false;
-            anim.SetBool("IdleBlocking", false);
+            animator.SetBool("IdleBlocking", false);
         }
 
-        // Trava o movimento do personagem
-        if (attacking && grounded || blocking) 
-            inputX = 0;
+        // slow no movimento do personagem
+        if(blocking)  {
+            moveSpeed = slowspeed;
+        }
+        else { 
+            moveSpeed = 4;  
+        }
+      
         
         // Input de dash 
-        if (Input.GetButtonDown("Fire3") && canDash && inputX != 0) 
-			StartCoroutine(Dash());
+        if (grounded){
+			canDash = true;
+            
+        }
 
         // Input do paraquedas
         if (grounded) {
@@ -157,29 +166,29 @@ public class Player : MonoBehaviour {
 
         // Animação de movimentação do personagem 
         if (grounded) {
-            anim.SetBool("Falling", false);
-            anim.SetBool("Jumping", false);
+            animator.SetBool("Falling", false);
+            animator.SetBool("Jumping", false);
 
             if (rb.velocity.x != 0 && inputX != 0) {
-                anim.SetBool("Running", true);
+                animator.SetBool("Running", true);
             } else {
-                anim.SetBool("Running", false);
+                animator.SetBool("Running", false);
             }
         } else {
-            anim.SetBool("Running", false);
+            animator.SetBool("Running", false);
 
             if (rb.velocity.y > 0) {
-                anim.SetBool("Jumping", true);
-                anim.SetBool("Falling", false);
+                animator.SetBool("Jumping", true);
+                animator.SetBool("Falling", false);
             } if (rb.velocity.y < 0) {
-                anim.SetBool("Falling", true);
-                anim.SetBool("Jumping", false);
+                animator.SetBool("Falling", true);
+                animator.SetBool("Jumping", false);
             }
         }
 
         // Morte do personagem
         if (currentHealth <= 0 && !blockInput) {
-            anim.SetTrigger("Deading");
+            animator.SetTrigger("Deading");
             blockInput = true;
             moveSpeed = 0;
             inputX = 0;
@@ -188,10 +197,11 @@ public class Player : MonoBehaviour {
 
     void FixedUpdate() {
 
-        // Retorna o valor de "dashing"
-        if (dashing) {
+      
+        if (isDashing) {
             return;
         }
+        
 
         // Movimentação do personagem 
         rb.velocity = new Vector2(inputX * moveSpeed, rb.velocity.y);
@@ -207,20 +217,58 @@ public class Player : MonoBehaviour {
     }
     
     // Dash do personagem 
-    private IEnumerator Dash() {
-		canDash = false; 
-        dashing = true;
-		float originalGravity = rb.gravityScale; 
-		rb.gravityScale = 0f; 
-        tr.emitting = true;
-        rb.velocity = new Vector2(transform.localScale.x * dashingPower * facingDirection, 0f); 
-        yield return new WaitForSeconds(dashingTime);
-        tr.emitting = false;
-		rb.gravityScale = originalGravity; 
-		dashing = false; 
-		yield return new WaitForSeconds(dashingCooldown); 
-		canDash = true; 
+  private void Dash() {
+        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+        {
+            ghost.makeGhost = true;
+            isDashing = true;
+            canDash = false;
+            dashDir = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+            if (dashDir == Vector2.zero)
+            {
+                dashDir = new Vector2(transform.localScale.x, 0);
+            }
+            StartCoroutine(stopDash());
+        }
+
+        if (isDashing)
+        {
+            this.parachute.CloseParachute();
+            rb.velocity = dashDir.normalized * dashVel;
+            return;
+        }
+
+        IEnumerator stopDash()
+        {
+            yield return new WaitForSeconds(dashTime);
+            ghost.makeGhost = false;
+            isDashing = false;
+            rb.velocity = Vector2.zero;
+            if (grounded){
+                yield return new WaitForSeconds(dashTime);
+                canDash = true;
+            }
+        }
     }
+
+    // Dano do personagem
+    void OnTriggerEnter2D(Collider2D other) {
+        if(colliding)
+            return;
+        colliding = true;
+
+        if (other.gameObject.tag == "Damage" && currentHealth > 0) {
+            TakeDamage(damageEnemy);
+            if (currentHealth > 0)
+            animator.SetTrigger("Hunting");
+        }
+    }
+
+    // Diminui a barra de vida
+    void TakeDamage(int damage) {
+		currentHealth -= damage;
+		healthBar.SetHealth(currentHealth);
+	}
 
     // Finalização do ataque
     void EndAnimationATK() {
