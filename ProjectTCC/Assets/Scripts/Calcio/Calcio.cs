@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Calcio : MonoBehaviour {
 
+    public static Calcio                   cal;
+
     // Movimentação
     [Header("Move")]
     public float                           moveSpeed;
@@ -16,13 +18,15 @@ public class Calcio : MonoBehaviour {
     public float                           timer; // Timer for cooldown between attacks
     private float                          intTimer;
     private bool                           cooling; // Check if Enemy is cooling after attack
+    private bool                           atkp;
 
-    // Vida do inimigo
+    // Vida
     [Header("Health")]
-    [SerializeField] int          damagePlayer;
-    public int                    maxHealth = 100;
-	public int                    currentHealth;
-    private bool                  colliding;
+    [SerializeField] int                   damageGiven;
+    public int                             damageTaken;
+    public int                             maxHealth = 100;
+	public int                             currentHealth;
+    private bool                           colliding;
 
     // Área limite
     [Header("Limit")]
@@ -36,11 +40,16 @@ public class Calcio : MonoBehaviour {
     public GameObject                      hotZone;
     public GameObject                      triggerArea;
     private float                          distance; // Store the distance b/w enemy and player
+    public LayerMask                       playerLayer; 
+    public float                           circlesz;
+    public Vector3                         offset; 
 
     // Componente
     private Animator anim;
 
     void Awake() {
+
+        cal = this;
         
         anim = GetComponent<Animator>();
 
@@ -57,8 +66,21 @@ public class Calcio : MonoBehaviour {
 
     void Update() {
 
+        if(atkp)
+        {
+            if(colliding == false)
+            {
+                CheckAtk();
+            }
+        }
+        else
+        {
+            colliding = false;
+        }
+
+        atkp = Physics2D.OverlapCircle(transform.position + offset, circlesz, playerLayer);
+
         // Detecta se está colidindo
-        colliding = false; 
 
         // Chama a movimentação do inimigo
         if (!attackMode) {
@@ -183,17 +205,25 @@ public class Calcio : MonoBehaviour {
             transform.eulerAngles = rotation;
         }
     }
-
-    // Dano do inimigo
-    void OnTriggerEnter2D(Collider2D other) {
+    
+    private void CheckAtk()
+    {
         if(colliding)
+        {
             return;
-        colliding = true;
+        }
+            colliding = true;
 
-        if (other.gameObject.tag == "AttackPlayer" && currentHealth > 0) {
-            currentHealth -= damagePlayer;
+            currentHealth -= damageTaken;
             if (currentHealth > 0)
             anim.SetTrigger("Hit");
-        }
+    }
+
+    // Dano do inimigo
+   
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position + offset, circlesz);
     }
 }

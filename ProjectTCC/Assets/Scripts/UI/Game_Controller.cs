@@ -14,7 +14,7 @@ public class Game_Controller : MonoBehaviour {
     void Update() {
 
         // Chama o "Reload"
-        if(Input.GetKey(KeyCode.R) && Player.blockInput) {
+        if(Input.GetKey(KeyCode.R) && Player.pr.blockInput) {
             Reload();
         }
 
