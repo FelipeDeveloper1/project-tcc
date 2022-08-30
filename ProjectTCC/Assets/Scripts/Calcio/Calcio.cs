@@ -8,7 +8,7 @@ public class Calcio : MonoBehaviour {
     [Header("Move")]
     public float                           moveSpeed;
     private bool                           blockMove;
-
+    // public Ghost ghost;
     // Ataque
     [Header("Attack")]
     public float                           attackDistance; // Minimum distance for attack

@@ -10,6 +10,7 @@ public class Player : MonoBehaviour {
     public static bool            blockInput; 
     private float                 inputX;              
     private int                   facingDirection;
+    private float                 slowspeed = 1.0f;
 
     // Pulo
     [Header("Jump")]
@@ -30,11 +31,12 @@ public class Player : MonoBehaviour {
 
     // Dash
     [Header("Dash")]
-    [SerializeField] bool         dashing; 
-	[SerializeField] float        dashingPower;  
-	[SerializeField] float        dashingTime; 
-	[SerializeField] float        dashingCooldown; 
-	private bool                  canDash = true; 
+    public float                dashVel;
+    public float                dashTime;
+    private Vector2             dashDir;
+    private bool                isDashing;
+    private bool                canDash;
+    public Ghost                ghost;
 
     // Paraquedas
     [Header("Parachute")]
@@ -75,7 +77,7 @@ public class Player : MonoBehaviour {
     }
 
     void Update() {
-
+        Dash();
         // Detecta se está colidindo
         colliding = false; 
 
@@ -127,13 +129,20 @@ public class Player : MonoBehaviour {
             animator.SetBool("IdleBlocking", false);
         }
 
-        // Trava o movimento do personagem
-        if (attacking && grounded || blocking) 
-            inputX = 0;
+        // slow no movimento do personagem
+        if(blocking)  {
+            moveSpeed = slowspeed;
+        }
+        else { 
+            moveSpeed = 4;  
+        }
+      
         
         // Input de dash 
-        if (Input.GetButtonDown("Fire3") && canDash && inputX != 0) 
-			StartCoroutine(Dash());
+        if (grounded){
+			canDash = true;
+            
+        }
 
         // Input do paraquedas
         if (grounded) {
@@ -188,10 +197,11 @@ public class Player : MonoBehaviour {
 
     void FixedUpdate() {
 
-        // Retorna o valor de "dashing"
-        if (dashing) {
+      
+        if (isDashing) {
             return;
         }
+        
 
         // Movimentação do personagem 
         rb.velocity = new Vector2(inputX * moveSpeed, rb.velocity.y);
@@ -207,19 +217,38 @@ public class Player : MonoBehaviour {
     }
     
     // Dash do personagem 
-    private IEnumerator Dash() {
-		canDash = false; 
-        dashing = true;
-		float originalGravity = rb.gravityScale; 
-		rb.gravityScale = 0f; 
-        tr.emitting = true;
-        rb.velocity = new Vector2(transform.localScale.x * dashingPower * facingDirection, 0f); 
-        yield return new WaitForSeconds(dashingTime);
-        tr.emitting = false;
-		rb.gravityScale = originalGravity; 
-		dashing = false; 
-		yield return new WaitForSeconds(dashingCooldown); 
-		canDash = true; 
+  private void Dash() {
+        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+        {
+            ghost.makeGhost = true;
+            isDashing = true;
+            canDash = false;
+            dashDir = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+            if (dashDir == Vector2.zero)
+            {
+                dashDir = new Vector2(transform.localScale.x, 0);
+            }
+            StartCoroutine(stopDash());
+        }
+
+        if (isDashing)
+        {
+            this.parachute.CloseParachute();
+            rb.velocity = dashDir.normalized * dashVel;
+            return;
+        }
+
+        IEnumerator stopDash()
+        {
+            yield return new WaitForSeconds(dashTime);
+            ghost.makeGhost = false;
+            isDashing = false;
+            rb.velocity = Vector2.zero;
+            if (grounded){
+                yield return new WaitForSeconds(dashTime);
+                canDash = true;
+            }
+        }
     }
 
     // Dano do personagem
